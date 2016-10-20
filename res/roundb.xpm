@@ -1,0 +1,24 @@
+/* XPM https://ja.wikipedia.org/wiki/XPM */
+static char *xpmimg[] = {
+/* Width Height Ncolors CpP(characters/pixel) [x_hot y_hot] [XPMEXT] */
+"13 13 5 2 7 7",
+/* colors ... N lines of color information */
+" 	c none	m none	s none",
+".	c lightblue	m white	s topShadowColor",
+"X	c black	m black	s iconColor1",
+"o	c #646464646464	m black	s bottomShadowColor",
+"O	c red	m white	s selectColor",
+/* pixels ... H lines of W pixels x CpP characters */
+"                          ",
+"          . . .           ",
+"      . . X X X o o       ",
+"    . X X X X X X X o     ",
+"    . X X X X X X X o     ",
+"  . X X X X O X X X X o   ",
+"  . X X X O O O X X X o   ",
+"  . X X X X O X X X X o   ",
+"    . X X X X X X X o     ",
+"    . X X X X X X X o     ",
+"      o o X X X o o       ",
+"          o o o           ",
+"                          "};
