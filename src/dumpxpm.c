@@ -289,7 +289,7 @@ DWORD getXPMcolor(char *c)
 #if 0
         uchar rt = 223, gt = 183, bt = 191;
 #else
-        uchar rt = 223, gt = 223, bt = 191;
+        uchar rt = 223, gt = 187, bt = 191;
 #endif
         uchar bg = 8 + ((r>rt ? 4 : 0) | (g>gt ? 2 : 0) | (b>bt ? 1 : 0));
         uchar fg = 0x0F - bg;
