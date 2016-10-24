@@ -206,6 +206,7 @@ int dispBMP(int c, int r, int p, int d, DWORD *a, char *fn)
   return 0;
 }
 
+#define XPML 2
 #define XPM_FMT_FIRST "/* XPM"
 #define XPM_FMT_SECOND "static char *"
 #define XPM_FMT_XPMEXT "XPMEXT"
@@ -245,29 +246,29 @@ typedef struct _XPMINFO {
 
 XPMCOLORMAP xpmcolors[] = {
   {XPM_COLOR_NONE, "none"},
-  {0xFF000000, "black"},
-  {0xFF00007F, "dblue"},
-  {0xFF007F00, "dgreen"},
-  {0xFF007F7F, "dcyan"},
-  {0xFF7F0000, "dred"},
-  {0xFF7F007F, "dmagenta"},
-  {0xFF7F7F00, "dyellow"},
-  {0xFF7F7F7F, "gray"},
-  {0xFF3F3F3F, "dgray"},
-  {0xFF0000FF, "blue"},
-  {0xFF00FF00, "green"},
-  {0xFF00FFFF, "cyan"},
-  {0xFFFF0000, "red"},
-  {0xFFFF00FF, "magenta"},
-  {0xFFFFFF00, "yellow"},
-  {0xFFFFFFFF, "white"},
+  {0x07000000, "black"},
+  {0x1E00007F, "dblue"},
+  {0x2D007F00, "dgreen"},
+  {0x3C007F7F, "dcyan"},
+  {0x4B7F0000, "dred"},
+  {0x5A7F007F, "dmagenta"},
+  {0x697F7F00, "dyellow"},
+  {0x707F7F7F, "gray"},
+  {0x8F3F3F3F, "dgray"},
+  {0x960000FF, "blue"},
+  {0xA500FF00, "green"},
+  {0xB400FFFF, "cyan"},
+  {0xC3FF0000, "red"},
+  {0xD2FF00FF, "magenta"},
+  {0xE1FFFF00, "yellow"},
+  {0xF8FFFFFF, "white"},
   {XPM_COLOR_NONE, "None"}, // dummy
-  {0xFF3F7F00, "darkolivegreen"}, // test
-  {0xFF00FFFF, "lightblue"}, // cyan
-  {0xFF7F7F7F, "gray50"}, // test
-  {0xFFB2B2B2, "gray70"}, // test
-  {0xFFD8D8D8, "gray85"}, // test
-  {0xFFBFBFBF, "lightgray"}}; // dummy
+  {0x293F7F00, "darkolivegreen"}, // test
+  {0xB100FFFF, "lightblue"}, // cyan
+  {0x877F7F7F, "gray50"}, // test
+  {0x70B2B2B2, "gray70"}, // test
+  {0x7FD8D8D8, "gray85"}, // test
+  {0x7EBFBFBF, "lightgray"}}; // dummy
 
 DWORD getXPMcolor(char *c)
 {
@@ -278,8 +279,23 @@ DWORD getXPMcolor(char *c)
   }
   if(c[0] == '#'){
     DWORD argb;
-    int r = sscanf(c, "#%x", &argb);
-    if(r) return argb;
+    int n = sscanf(c, "#%x", &argb);
+    if(n){
+      if(argb & 0xFF000000) return argb;
+      else{
+        uchar r = (argb >> 16) & 0x0FF;
+        uchar g = (argb >> 8) & 0x0FF;
+        uchar b = argb & 0x0FF;
+#if 0
+        uchar rt = 223, gt = 183, bt = 191;
+#else
+        uchar rt = 223, gt = 223, bt = 191;
+#endif
+        uchar bg = 8 + ((r>rt ? 4 : 0) | (g>gt ? 2 : 0) | (b>bt ? 1 : 0));
+        uchar fg = 0x0F - bg;
+        return (((bg << 4) | (fg & 0x0F)) << 24) | argb;
+      }
+    }
   }
   berror(1, "unknown color: [%s]", c);
   return XPM_COLOR_NONE;
@@ -337,7 +353,7 @@ int loadXPMINFO(XPMINFO *xi, char *buf)
   if(r >= 7 && !strncmp(remain, XPM_FMT_XPMEXT, strlen(XPM_FMT_XPMEXT)))
     xi->xpmext = 1;
 #if 0
-  bprintf(2, 40, "%d[%d][%d][%d][%d][%d][%d][%d]",
+  bprintf(XPML, 40, "%d[%d][%d][%d][%d][%d][%d][%d]",
     r, xi->c, xi->r, xi->ncolors, xi->cpp, xi->x_hot, xi->y_hot, xi->xpmext);
 #endif
   if(xi->ncolors > XPM_PALETTE_MAX)
@@ -369,11 +385,25 @@ int loadXPMpal(XPMINFO *xi, int n, char *buf)
   return setXPMpal(xi, n, s, c, m, g, getXPMcolor(c), p);
 }
 
+void bputsXPMattr(XPMINFO *xi, ushort y, ushort x, uchar *s)
+{
+  uchar *p;
+  int q;
+  cursor(y, x, 0);
+  for(p = s, q = 0; *p; ++p, ++q, ++curs.X){
+    int o = q / xi->cpp; // round
+    DWORD argb = pickXPMpal(xi, s + o * xi->cpp);
+    consb[curs.Y * WIDTH + curs.X].Char.AsciiChar = *p;
+    consb[curs.Y * WIDTH + curs.X].Attributes = (argb >> 24) & 0x0FF;
+    xi->a[xi->c * (y - XPML) + x + o] = argb;
+  }
+}
+
 int loadXPMpixel(XPMINFO *xi, int n, char *buf)
 {
-  int h = 2 + n;
+  int h = XPML + n;
   buf[1 + xi->c * xi->cpp] = '\0';
-  if(h < HEIGHT) bputs(h, 0, buf + 1); // never use bprintf for buf
+  if(h < HEIGHT) bputsXPMattr(xi, h, 0, buf + 1); // never use bprintf for buf
   return 0;
 }
 
@@ -462,10 +492,10 @@ int dumpxpm(char *xpmfile)
         if(loadXPMINFO(&xi, buf)) break;
         if(!xi.a){ if(buildBMP(&xi)) break; }
         ++line;
-      }else if(line >= 2 && line < 2 + xi.ncolors){
-        if(loadXPMpal(&xi, line++ - 2, buf)) break;
+      }else if(line >= XPML && line < XPML + xi.ncolors){
+        if(loadXPMpal(&xi, line++ - XPML, buf)) break;
       }else{
-        if(loadXPMpixel(&xi, line++ - xi.ncolors - 2, buf)) break;
+        if(loadXPMpixel(&xi, line++ - xi.ncolors - XPML, buf)) break;
       }
     }else{
       berror(1, "unknown stat: %d", stat);
