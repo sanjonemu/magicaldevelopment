@@ -246,26 +246,26 @@ typedef struct _XPMINFO {
 
 XPMCOLORMAP xpmcolors[] = {
   {XPM_COLOR_NONE, "none"},
-  {0x07000000, "black"},
+  {0x08000000, "black"},
   {0x1E00007F, "dblue"},
   {0x2D007F00, "dgreen"},
   {0x3C007F7F, "dcyan"},
   {0x4B7F0000, "dred"},
   {0x5A7F007F, "dmagenta"},
   {0x697F7F00, "dyellow"},
-  {0x707F7F7F, "gray"},
-  {0x8F3F3F3F, "dgray"},
+  {0x787F7F7F, "gray"},
+  {0x873F3F3F, "dgray"},
   {0x960000FF, "blue"},
   {0xA500FF00, "green"},
   {0xB400FFFF, "cyan"},
   {0xC3FF0000, "red"},
   {0xD2FF00FF, "magenta"},
   {0xE1FFFF00, "yellow"},
-  {0xF8FFFFFF, "white"},
+  {0xF7FFFFFF, "white"},
   {XPM_COLOR_NONE, "None"}, // dummy
   {0x293F7F00, "darkolivegreen"}, // test
   {0xB100FFFF, "lightblue"}, // cyan
-  {0x877F7F7F, "gray50"}, // test
+  {0x807F7F7F, "gray50"}, // test
   {0x70B2B2B2, "gray70"}, // test
   {0x7FD8D8D8, "gray85"}, // test
   {0x7EBFBFBF, "lightgray"}}; // dummy
@@ -292,7 +292,7 @@ DWORD getXPMcolor(char *c)
         uchar rt = 223, gt = 187, bt = 191;
 #endif
         uchar bg = 8 + ((r>rt ? 4 : 0) | (g>gt ? 2 : 0) | (b>bt ? 1 : 0));
-        uchar fg = 0x0F - bg;
+        uchar fg = !bg ? 8 : (bg == 0x0F ? 7 : (0x0F - bg));
         return (((bg << 4) | (fg & 0x0F)) << 24) | argb;
       }
     }
